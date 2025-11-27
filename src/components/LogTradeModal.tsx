@@ -38,60 +38,77 @@ export default function LogTradeModal() {
 
   const onSubmit = async (data: TradeFormData) => {
     setIsSubmitting(true)
-    
-    const emotions: Emotion[] = selectedEmotions.map((type) => ({
-      type,
-      intensity: 5,
-      timestamp: new Date().toISOString(),
-    }))
 
-    const newTrade: Trade = {
-      id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: user?.id || 'user1',
-      instrument: data.instrument,
-      direction: data.direction,
-      entryPrice: data.entryPrice,
-      entryTime: data.entryTime,
-      size: data.size,
-      conviction,
-      quickReason: data.quickReason,
-      preEntryEmotions: emotions,
-      status: 'open',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+    try {
+      const emotions: Emotion[] = selectedEmotions.map((type) => ({
+        type,
+        intensity: 5,
+        timestamp: new Date().toISOString(),
+      }))
 
-    // Optimistic update
-    dispatch(addTrade(newTrade))
+      // Convert datetime-local format to ISO string
+      const entryTime = data.entryTime.includes('T')
+        ? new Date(data.entryTime).toISOString()
+        : data.entryTime
 
-    // Try to save to backend
-    if (navigator.onLine) {
-      try {
-        await createTrade(newTrade).unwrap()
-      } catch (error) {
-        console.error('Failed to create trade:', error)
-        // Add to offline queue
+      const newTrade: Trade = {
+        id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: user?.id || 'user1',
+        instrument: data.instrument,
+        direction: data.direction,
+        entryPrice: data.entryPrice,
+        entryTime: entryTime, // Use converted time
+        size: data.size,
+        conviction,
+        quickReason: data.quickReason,
+        preEntryEmotions: emotions,
+        status: 'open',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      console.log('🔄 Creating trade:', newTrade)
+
+      // Optimistic update - add to Redux immediately
+      dispatch(addTrade(newTrade))
+
+      // Try to save to backend
+      if (navigator.onLine) {
+        try {
+          const result = await createTrade(newTrade).unwrap()
+          console.log('✅ Trade created successfully:', result)
+        } catch (error) {
+          console.error('❌ Failed to create trade on backend:', error)
+          // Add to offline queue
+          await localSync.addToQueue({
+            type: 'create',
+            endpoint: '/trades',
+            payload: newTrade,
+          })
+          console.log('📝 Added to offline queue')
+        }
+      } else {
+        // Offline - add to queue
         await localSync.addToQueue({
           type: 'create',
           endpoint: '/trades',
           payload: newTrade,
         })
+        console.log('🔌 Offline - Added to queue')
       }
-    } else {
-      // Offline - add to queue
-      await localSync.addToQueue({
-        type: 'create',
-        endpoint: '/trades',
-        payload: newTrade,
-      })
-    }
 
-    // Reset form and close
-    reset()
-    setSelectedEmotions([])
-    setConviction(5)
-    setIsSubmitting(false)
-    dispatch(closeLogModal())
+      // Reset form and close
+      reset()
+      setSelectedEmotions([])
+      setConviction(5)
+      dispatch(closeLogModal())
+
+    } catch (error) {
+      console.error('💥 Error in onSubmit:', error)
+      alert('Failed to save trade. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

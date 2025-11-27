@@ -129,7 +129,13 @@ export interface TradeFilters {
   tags?: string[]
   emotions?: EmotionType[]
   pnlRange?: { min: number; max: number }
+  pnlType?: 'all' | 'profit' | 'loss'
   dateRange?: { start: string; end: string }
   status?: 'open' | 'closed' | 'all'
+}
+
+export interface AuthResponse {
+  token: string
+  user: User
 }
 

@@ -2,12 +2,16 @@ import { http, HttpResponse } from 'msw'
 import { sampleTrades } from '../utils/sampleData'
 import { Trade, AIAnalysisResponse, DecisionGraph, SimilarTradeResult } from '../types'
 
-let trades = [...sampleTrades]
+// Only load sample trades if this is a demo user session
+const isDemoUser = () => localStorage.getItem('isDemoUser') === 'true'
+let trades: Trade[] = isDemoUser() ? [...sampleTrades] : []
 
 export const handlers = [
   // Get all trades
   http.get('/api/trades', () => {
-    return HttpResponse.json(trades)
+    // Double-check demo status on each request
+    const currentTrades = isDemoUser() ? trades : []
+    return HttpResponse.json(currentTrades)
   }),
 
   // Get single trade
@@ -206,7 +210,7 @@ export const handlers = [
 
     // Find similar trades (same instrument or similar emotions)
     const similar: SimilarTradeResult[] = trades
-      .filter((t) => t.id !== trade.id && (t.instrument === trade.instrument || 
+      .filter((t) => t.id !== trade.id && (t.instrument === trade.instrument ||
         t.preEntryEmotions.some((e) => trade.preEntryEmotions.some((te) => te.type === e.type))))
       .slice(0, 5)
       .map((t) => ({

@@ -12,6 +12,12 @@ export default function TradeCard({ trade }: TradeCardProps) {
   const isProfit = pnl > 0
   const isLoss = pnl < 0
 
+  // Guard: Don't render if trade doesn't have a valid ID
+  if (!trade.id || trade.id === 'undefined' || trade.id === 'null') {
+    console.error('TradeCard received trade without valid ID:', trade)
+    return null
+  }
+
   return (
     <Link
       to={`/trade/${trade.id}`}

@@ -14,11 +14,14 @@ interface DecisionGraphProps {
 export default function DecisionGraph({ tradeId, trade: propTrade }: DecisionGraphProps) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const actualTradeId = tradeId || id || ''
-  
-  const { data: fetchedTrade } = useGetTradeQuery(actualTradeId, { skip: !actualTradeId || !!propTrade })
+  const actualTradeId = tradeId || id
+
+  const shouldSkip = !actualTradeId || actualTradeId === '' || actualTradeId === 'undefined' || !!propTrade
+  const { data: fetchedTrade } = useGetTradeQuery(actualTradeId || '', {
+    skip: shouldSkip
+  })
   const [parseGraph, { data: graphData, isLoading }] = useParseDecisionGraphMutation()
-  
+
   const trade = propTrade || fetchedTrade
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -169,4 +172,3 @@ export default function DecisionGraph({ tradeId, trade: propTrade }: DecisionGra
     </div>
   )
 }
-

@@ -4,7 +4,7 @@ export const tradeSchema = z.object({
   instrument: z.string().min(1, 'Instrument is required'),
   direction: z.enum(['long', 'short']),
   entryPrice: z.number().positive('Entry price must be positive'),
-  entryTime: z.string().datetime(),
+  entryTime: z.string().min(1, 'Entry time is required'), // Accept any non-empty string
   size: z.number().positive('Size must be positive'),
   conviction: z.number().min(1).max(10),
   quickReason: z.string().optional(),

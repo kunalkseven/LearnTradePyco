@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { Trade, TradeFilters } from '../../types'
-import { sampleTrades } from '../../utils/sampleData'
 
 interface TradesState {
   trades: Trade[]
@@ -9,7 +8,8 @@ interface TradesState {
 }
 
 const initialState: TradesState = {
-  trades: sampleTrades,
+  // Always start empty - trades set after login based on user type
+  trades: [],
   filters: {},
   selectedTradeId: null,
 }
@@ -43,21 +43,27 @@ const tradesSlice = createSlice({
       // Merge remote trades with local, keeping local changes
       const localTrades = state.trades
       const remoteTrades = action.payload
-      
+
       // Create a map of local trades by ID
       const localMap = new Map(localTrades.map((t) => [t.id, t]))
-      
+
       // Merge: prefer local if exists, otherwise use remote
       const merged = remoteTrades.map((remote) => {
         const local = localMap.get(remote.id)
         return local || remote
       })
-      
+
       // Add any local-only trades
       remoteTrades.forEach((remote) => localMap.delete(remote.id))
       const localOnly = Array.from(localMap.values())
-      
+
       state.trades = [...merged, ...localOnly]
+    },
+    clearAllTrades: (state) => {
+      // Clear all trades - used on logout to reset state
+      state.trades = []
+      state.filters = {}
+      state.selectedTradeId = null
     },
   },
 })
@@ -70,6 +76,7 @@ export const {
   clearFilters,
   setSelectedTrade,
   syncTrades,
+  clearAllTrades,
 } = tradesSlice.actions
 
 export default tradesSlice.reducer

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAppSelector, useAppDispatch } from '../../app/hooks'
 import { useGetTradeQuery, useUpdateTradeMutation, useAnalyzeWithAIMutation, useGetSimilarTradesQuery } from '../../api/apiSlice'
@@ -18,23 +18,32 @@ export default function TradeDetailPage() {
   const dispatch = useAppDispatch()
   const { trades } = useAppSelector((state) => state.trades)
   const { user } = useAppSelector((state) => state.auth)
-  
+
   const { data: trade, isLoading } = useGetTradeQuery(id || '', { skip: !id })
   const [updateTradeMutation] = useUpdateTradeMutation()
   const [analyzeWithAI, { data: aiAnalysis, isLoading: isAnalyzing }] = useAnalyzeWithAIMutation()
   const { data: similarTrades } = useGetSimilarTradesQuery(id || '', { skip: !id })
-  
+
   // Fallback to local store if API fails
   const localTrade = trades.find((t) => t.id === id)
   const currentTrade = trade || localTrade
 
   const [isEditing, setIsEditing] = useState(false)
-  const [selectedEmotions, setSelectedEmotions] = useState<EmotionType[]>([])
+  const [preEntryEmotions, setPreEntryEmotions] = useState<EmotionType[]>([])
+  const [postExitEmotions, setPostExitEmotions] = useState<EmotionType[]>([])
   const [insights, setInsights] = useState(aiAnalysis?.patterns || [])
 
   const { register, handleSubmit } = useForm<Partial<Trade>>({
     defaultValues: currentTrade,
   })
+
+  // Initialize emotions state when trade loads
+  useEffect(() => {
+    if (currentTrade) {
+      setPreEntryEmotions(currentTrade.preEntryEmotions?.map(e => e.type) || [])
+      setPostExitEmotions(currentTrade.postExitEmotions?.map(e => e.type) || [])
+    }
+  }, [currentTrade])
 
   if (isLoading && !localTrade) {
     return (
@@ -71,8 +80,24 @@ export default function TradeDetailPage() {
       exitPrice: data.exitPrice || currentTrade.exitPrice,
     }
 
-    if (selectedEmotions.length > 0) {
-      updates.postExitEmotions = selectedEmotions.map((type) => ({
+    // Calculate P/L if exitPrice is provided
+    if (updates.exitPrice) {
+      const tempTrade = { ...currentTrade, ...updates }
+      updates.pnl = calculatePnL(tempTrade)
+      updates.pnlPercent = calculatePnLPercent(tempTrade)
+      updates.status = 'closed'
+    }
+
+    if (preEntryEmotions.length > 0) {
+      updates.preEntryEmotions = preEntryEmotions.map((type) => ({
+        type,
+        intensity: 5,
+        timestamp: new Date().toISOString(),
+      }))
+    }
+
+    if (postExitEmotions.length > 0) {
+      updates.postExitEmotions = postExitEmotions.map((type) => ({
         type,
         intensity: 5,
         timestamp: new Date().toISOString(),
@@ -197,11 +222,20 @@ export default function TradeDetailPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pre-Entry Emotions
+                  </label>
+                  <EmotionPicker
+                    selected={preEntryEmotions}
+                    onChange={setPreEntryEmotions}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Post-Exit Emotions
                   </label>
                   <EmotionPicker
-                    selected={selectedEmotions}
-                    onChange={setSelectedEmotions}
+                    selected={postExitEmotions}
+                    onChange={setPostExitEmotions}
                   />
                 </div>
                 <div>

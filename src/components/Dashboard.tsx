@@ -12,24 +12,38 @@ import {
 } from '../utils/helpers'
 import InsightCard from './InsightCard'
 
+import DateRangeFilter from './DateRangeFilter'
+
 export default function Dashboard() {
-  const { trades } = useAppSelector((state) => state.trades)
+  const { trades, filters } = useAppSelector((state) => state.trades)
   const { user } = useAppSelector((state) => state.auth)
   const [analyzeWithAI, { isLoading: isAnalyzing }] = useAnalyzeWithAIMutation()
   const [insights, setInsights] = useState<AIInsight[]>([])
 
+  const filteredTrades = useMemo(() => {
+    if (!filters.dateRange) return trades
+
+    const start = new Date(filters.dateRange.start)
+    const end = new Date(filters.dateRange.end)
+
+    return trades.filter((trade) => {
+      const entryDate = new Date(trade.entryTime)
+      return entryDate >= start && entryDate <= end
+    })
+  }, [trades, filters.dateRange])
+
   const kpis = useMemo(() => {
     return {
-      winRate: getWinRate(trades),
-      avgPnL: getAveragePnL(trades),
-      tradesCount: trades.length,
-      expectancy: getExpectancy(trades),
-      avgConviction: getAverageConviction(trades),
+      winRate: getWinRate(filteredTrades),
+      avgPnL: getAveragePnL(filteredTrades),
+      tradesCount: filteredTrades.length,
+      expectancy: getExpectancy(filteredTrades),
+      avgConviction: getAverageConviction(filteredTrades),
     }
-  }, [trades])
+  }, [filteredTrades])
 
   const chartData = useMemo(() => {
-    const closedTrades = trades
+    const closedTrades = filteredTrades
       .filter((t) => t.status === 'closed' && t.exitTime)
       .sort((a, b) => new Date(a.exitTime!).getTime() - new Date(b.exitTime!).getTime())
       .map((trade) => ({
@@ -44,12 +58,12 @@ export default function Dashboard() {
       cumulative += item.pnl
       return { ...item, cumulative }
     })
-  }, [trades])
+  }, [filteredTrades])
 
   const emotionData = useMemo(() => {
     const emotionMap = new Map<string, { count: number; totalPnL: number }>()
-    
-    trades.forEach((trade) => {
+
+    filteredTrades.forEach((trade) => {
       trade.preEntryEmotions.forEach((emotion) => {
         const key = emotion.type
         const existing = emotionMap.get(key) || { count: 0, totalPnL: 0 }
@@ -65,13 +79,13 @@ export default function Dashboard() {
       count: data.count,
       avgPnL: data.totalPnL / data.count,
     }))
-  }, [trades])
+  }, [filteredTrades])
 
   const handleAnalyze = async () => {
     try {
       const result = await analyzeWithAI({
         userId: user?.id || 'user1',
-        trades: trades.slice(0, 20), // Last 20 trades
+        trades: filteredTrades.slice(0, 20), // Last 20 trades of filtered set
       }).unwrap()
       setInsights(result.patterns || [])
     } catch (error) {
@@ -91,6 +105,8 @@ export default function Dashboard() {
           {isAnalyzing ? 'Analyzing...' : 'Get AI Insights'}
         </button>
       </div>
+
+      <DateRangeFilter />
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -134,20 +150,29 @@ export default function Dashboard() {
 
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Emotions vs P/L</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={emotionData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="emotion" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="avgPnL" name="Avg P/L">
-                {emotionData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.avgPnL > 0 ? '#10b981' : '#ef4444'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {emotionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={emotionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="emotion" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="avgPnL" name="Avg P/L">
+                  {emotionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.avgPnL > 0 ? '#10b981' : '#ef4444'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              <p className="text-center">
+                No emotions logged yet.<br />
+                <span className="text-sm">Add emotions to your trades to see insights.</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

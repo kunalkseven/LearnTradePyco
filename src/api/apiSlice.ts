@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { Trade, AIAnalysisResponse, DecisionGraph, SimilarTradeResult } from '../types'
+import { Trade, AIAnalysisResponse, DecisionGraph, SimilarTradeResult, AuthResponse } from '../types'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 
@@ -30,6 +30,14 @@ export const apiSlice = createApi({
         url: '/trades',
         method: 'POST',
         body: trade,
+      }),
+      invalidatesTags: ['Trade'],
+    }),
+    bulkCreateTrades: builder.mutation<{ success: boolean; count: number; trades: Trade[] }, { trades: Partial<Trade>[] }>({
+      query: (body) => ({
+        url: '/trades/bulk',
+        method: 'POST',
+        body,
       }),
       invalidatesTags: ['Trade'],
     }),
@@ -73,6 +81,34 @@ export const apiSlice = createApi({
     getSimilarTrades: builder.query<SimilarTradeResult[], string>({
       query: (id) => `/trades/${id}/similar`,
     }),
+    login: builder.mutation<AuthResponse, { email: string; password: string }>({
+      query: (body) => ({
+        url: '/auth/login',
+        method: 'POST',
+        body,
+      }),
+    }),
+    register: builder.mutation<AuthResponse, { email: string; password: string; name: string }>({
+      query: (body) => ({
+        url: '/auth/register',
+        method: 'POST',
+        body,
+      }),
+    }),
+    forgotPassword: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body,
+      }),
+    }),
+    resetPassword: builder.mutation<{ message: string }, { email: string; token: string; password: string }>({
+      query: (body) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 })
 
@@ -80,11 +116,16 @@ export const {
   useGetTradesQuery,
   useGetTradeQuery,
   useCreateTradeMutation,
+  useBulkCreateTradesMutation,
   useUpdateTradeMutation,
   useAddJournalMutation,
   useUploadImageMutation,
   useAnalyzeWithAIMutation,
   useParseDecisionGraphMutation,
   useGetSimilarTradesQuery,
+  useLoginMutation,
+  useRegisterMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = apiSlice
 
