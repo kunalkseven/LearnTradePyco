@@ -50,6 +50,19 @@ export default function LoginPage() {
           name: 'Super Admin',
           role: 'admin',
           createdAt: new Date().toISOString(),
+          settings: {
+            riskLimits: {
+              maxPositionSize: 10000,
+              maxDailyLoss: 5000,
+              maxDrawdown: 10000,
+            },
+            preTradeChecklist: {
+              enabled: true,
+              items: ['Trend Check', 'Support/Resistance', 'Risk/Reward > 1:2'],
+            },
+            currency: 'USD',
+            timezone: 'UTC',
+          },
         },
         token: 'static-admin-token-' + Date.now(),
       }
