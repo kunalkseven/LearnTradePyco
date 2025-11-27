@@ -37,6 +37,11 @@ const corsOptions = {
       return callback(null, true)
     }
 
+    // Allow Vercel deployments
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true)
+    }
+
     console.warn(`⚠️  CORS blocked origin: ${origin}`)
     callback(new Error('Not allowed by CORS'))
   },
