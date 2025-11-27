@@ -13,15 +13,16 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.2",
     "@reduxjs/toolkit": "^2.0.1",
     "localforage": "^1.10.0",
+    "lucide-react": "^0.555.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "reactflow": "^11.10.4",
     "react-hook-form": "^7.49.2",
-    "@hookform/resolvers": "^3.3.2",
     "react-redux": "^9.0.4",
     "react-router-dom": "^6.21.1",
+    "reactflow": "^11.10.4",
     "recharts": "^2.10.3",
     "zod": "^3.22.4"
   },

@@ -139,25 +139,25 @@ export default function TradeList(_props: TradeListProps) {
 
   return (
     <div>
-      <div className="mb-4 space-y-4">
+      <div className="mb-6 space-y-4">
         <input
           type="text"
-          placeholder="Search trades..."
+          placeholder="Search trades by instrument, reason, or journal..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
           aria-label="Search trades"
         />
 
         <DateRangeFilter />
 
-        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-5">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-gray-700">Filter by Emotion</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-gray-900">Filter by Emotion</p>
               <button
                 type="button"
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium"
                 onClick={handleClearFilters}
               >
                 Clear filters
@@ -171,9 +171,9 @@ export default function TradeList(_props: TradeListProps) {
                     key={emotion}
                     type="button"
                     onClick={() => toggleEmotionFilter(emotion)}
-                    className={`px-3 py-1 text-sm rounded-full border transition ${isActive
-                      ? 'bg-primary-100 text-primary-700 border-primary-200'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${isActive
+                      ? 'bg-primary-100 text-primary-700 border-primary-300 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     aria-pressed={isActive}
                   >
@@ -185,7 +185,7 @@ export default function TradeList(_props: TradeListProps) {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-700 mb-2">Filter by Result</p>
+            <p className="text-sm font-semibold text-gray-900 mb-3">Filter by Result</p>
             <div className="flex flex-wrap gap-2">
               {pnlOptions.map((option) => {
                 const isActive = (filters.pnlType || 'all') === option.value
@@ -194,9 +194,9 @@ export default function TradeList(_props: TradeListProps) {
                     key={option.value}
                     type="button"
                     onClick={() => handlePnlFilterChange(option.value)}
-                    className={`px-3 py-1 text-sm rounded-full border transition ${isActive
-                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'
+                    className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${isActive
+                      ? 'bg-emerald-100 text-emerald-700 border-emerald-300 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     aria-pressed={isActive}
                   >
